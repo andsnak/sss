@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import PersonalStep from './PersonalStep';
 import AgeStep from './AgeStep';
 import EmailStep from './EmailStep';
 import SummaryStep from './SummaryStep';
@@ -11,29 +12,32 @@ export enum ProductIds {
     devIns = 'dev_ins'
 }
 
-const PRODUCT_IDS_TO_NAMES= {
+const PRODUCT_IDS_TO_NAMES = {
     [ProductIds.devIns]: 'Developer Insurance',
 }
 
 const Buyflow: React.FC<BuyflowProps> = (props) => {
-    const [currentStep, setStep] = useState('email');
+    const [currentStep, setStep] = useState('personal');
     const [collectedData, updateData] = useState({
+        'personal': '',
         'email': '',
         'age': 0,
     });
-    const getStepCallback = (nextStep:string) => (
+    const getStepCallback = (nextStep: string) => (
         (field: string, value: any) => {
-            updateData({...collectedData, [field]: value});
+            updateData({ ...collectedData, [field]: value });
             setStep(nextStep);
         }
     );
     return <>
         <h4>Buying {PRODUCT_IDS_TO_NAMES[props.productId]}</h4>
-        {(currentStep === 'email' && <EmailStep cb={getStepCallback('age')} />)
+       
+        {(currentStep === 'personal' && <PersonalStep cb={getStepCallback('email')} />)
+        || (currentStep === 'email' && <EmailStep cb={getStepCallback('age')} />)
         || (currentStep === 'age' && <AgeStep  cb={getStepCallback('summary')} />)
-        || (currentStep === 'summary' && <SummaryStep collectedData={collectedData} />)        
-        }
+        || (currentStep === 'summary' && <SummaryStep collectedData={collectedData} />)}
     </>;
 };
 
 export default Buyflow;
+
