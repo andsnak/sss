@@ -7,7 +7,8 @@ import {
   Route,
   Link,
 } from "react-router-dom";
-import Buyflow, { ProductIds } from './buyflow/Buyflow';
+import { ProductIds } from './constants';
+import Buyflow from './buyflow/Buyflow';
 
 const App = () => {
   return (

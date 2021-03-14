@@ -1,49 +1,69 @@
-import React, {useCallback, useState } from 'react';
-import { Link } from 'react-router-dom';
-import Flow from '../components/Flow';
+import React, {useState,useCallback} from 'react';
+import {
+    ProductIds, 
+    PRODUCT_IDS_TO_NAMES, 
+    FORM_SCHEMAS, 
+    STEP_SCHEMAS, 
+    IFormSchema
+} from '../constants';
+import Stepper from '../components/Stepper'; 
 import Field from '../components/Field';
 
-export enum ProductIds {
-    devIns = 'dev_ins'
+interface BuyflowState {
+    [key: string]: string | number 
 }
 
-const PRODUCT_IDS_TO_NAMES = {
-    [ProductIds.devIns]: 'Developer Insurance',
+function getInitialState(formSchema : IFormSchema) : BuyflowState {
+    const initialState : BuyflowState = {};
+
+    for(let key in formSchema){
+        initialState[key] = formSchema[key].initialValue;
+    }
+
+    return initialState;
 }
 
-const Buyflow: React.FC<{
-    productId: ProductIds,
-}> = (props) => {
-    const [collectedData, updateData] = useState({
-        'name': '',
-        'surname': '',
-        'email': '',
-        'age': 0,
-    });
-
-    const handleChange = (field: string, value: any) => updateData({ ...collectedData, [field]: value });
-    const validatePersonal = useCallback(()=> name.length !== 0 && surname.length, [collectedData.name, collectedData.surname]);
-    const {name, surname, email, age} = collectedData;
+const Buyflow : React.FC<{productId: ProductIds}> = ({productId}) => {
+    const title = `Buying ${PRODUCT_IDS_TO_NAMES[productId]}`;
+    const formSchema = FORM_SCHEMAS[productId];
+    const stepSchema = STEP_SCHEMAS[productId];
     
+    const [collectedData, updateData] = useState<BuyflowState>(getInitialState(formSchema));
+
+    const handleChange = useCallback((id: string, value: string) => {
+        updateData((prev) =>({ ...prev, [id]: value}))
+    }, []);
+
+    const validate = (itemIds: string[]) => {
+        return !itemIds.some((id : string) => formSchema[id].required && collectedData[id].toString().length === 0);
+    }
+
     return (
-        <Flow title={`Buying ${PRODUCT_IDS_TO_NAMES[props.productId]}`}>
-                <Flow.Step index={0} validate={validatePersonal}>
-                <Field id={'name'} label={"Name"} type="text" onChange={handleChange} value={name}/>
-                <Field id={'surname'} label={"Surname"} type="text" onChange={handleChange} value={surname}/>
-            </Flow.Step>
-            <Flow.Step index={1}>
-                <Field id={'email'} label={"Email"} type="email" onChange={handleChange} value={email}/>
-            </Flow.Step>
-            <Flow.Step index={2}>
-                <Field id={'age'} label={"Age"} type="number" onChange={handleChange} value={age}/>                
-            </Flow.Step>
-            <Flow.Step index={3} isLastStep>
-                <div>Personal: {name} {surname}</div>
-                <div>Email: {email}</div>
-                <div>Age: {age}</div>
-                <div><Link to='/purchased=dev_ins'>Purchase</Link></div>
-            </Flow.Step>
-        </Flow>
+        <>
+            <h4>{title}</h4>
+            <Stepper>
+                {stepSchema.map((itemIds, index) => (
+                    <Stepper.Step key={`step.${index}`} validation={()=> validate(itemIds)}>
+                        {itemIds.map(id => {
+                            const {type, label, required} = formSchema[id]; 
+                            return <Field 
+                                        key={id}
+                                        id={id} 
+                                        type={type}
+                                        label={label} 
+                                        required={required}
+                                        value={collectedData[id]} 
+                                        onChange={handleChange}/>
+                        })}
+                    </Stepper.Step>    
+                ))}
+                <Stepper.Step>
+                    {Object.entries(formSchema).map(([itemId, schema], index) => (
+                        <div key={`${index}.${itemId}`}>{schema.label} : {collectedData[itemId]}</div>
+                    ))}
+                </Stepper.Step>
+            </Stepper>
+        </>
     )
 }
 
