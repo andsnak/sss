@@ -1,35 +1,37 @@
 export interface IFormSchema {
-    [key: string]: {
-        type: string,
-        label: string,
-        initialValue: string | number,
-        required: boolean
-    }
+    [key: string]: IFieldSchema
+}
+
+export interface IFieldSchema {
+    type: string,
+    label: string,
+    value: string | number,
+    required: boolean
 }
 
 const BUY_DEV_INS_FORM_SCHEMA : IFormSchema = {
     name: {
         type: "text",
         label: "Name",
-        initialValue: '',
+        value: '',
         required: true
     },
     surname: {
         type: "text",
         label: "Surname",
-        initialValue: '',
+        value: '',
         required: true
     },
     email: {
         type: "email",
         label: "Email",
-        initialValue: '',
+        value: '',
         required: false
     },
     age: {
         type: "number",
         label: "Age",
-        initialValue: 0,
+        value: 0,
         required: false
     },
 }

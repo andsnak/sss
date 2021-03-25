@@ -1,15 +1,15 @@
 import React from 'react';
 
-interface FieldProps {
+interface Props {
     id: string,
     type: string,
     label: string,
     value: string | number,
     required: boolean,
-    onChange: Function,
+    onChange: (id: string, value: any) => void,
 }
 
-const Field: React.FC<FieldProps> = ({id, type, label, value, required, onChange}) => {
+const Field: React.FC<Props> = ({id, type, label, value, required, onChange}) => {
     return (
         <div key={id}>
             <label htmlFor={id}>{label}{required && '*'}</label>

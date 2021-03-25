@@ -1,68 +1,58 @@
-import React, {useState,useCallback} from 'react';
-import {
-    ProductIds, 
-    PRODUCT_IDS_TO_NAMES, 
-    FORM_SCHEMAS, 
-    STEP_SCHEMAS, 
-    IFormSchema
-} from '../constants';
-import Stepper from '../components/Stepper'; 
-import Field from '../components/Field';
+import React, {useState} from 'react';
+import { useHistory, useLocation } from "react-router-dom";
+import {ProductIds, PRODUCT_IDS_TO_NAMES, STEP_SCHEMAS} from '../constants';
+import Step from '../components/Step'; 
+import LastStep from '../components/LastStep';
 
-interface BuyflowState {
+type State = {
     [key: string]: string | number 
 }
 
-function getInitialState(formSchema : IFormSchema) : BuyflowState {
-    const initialState : BuyflowState = {};
+const useHistoryStepper = ()  => {
+    const { state = { currentStep: 0 }, ...location } : {state: {currentStep: number}} = useLocation();
+    const history = useHistory();
 
-    for(let key in formSchema){
-        initialState[key] = formSchema[key].initialValue;
+    const setNextStep : () => void = () => {
+        history.push({
+            ...location,
+            state: {currentStep: state.currentStep + 1}
+          });
     }
 
-    return initialState;
+    return {currentStep: state.currentStep, setNextStep};
 }
 
 const Buyflow : React.FC<{productId: ProductIds}> = ({productId}) => {
     const title = `Buying ${PRODUCT_IDS_TO_NAMES[productId]}`;
-    const formSchema = FORM_SCHEMAS[productId];
-    const stepSchema = STEP_SCHEMAS[productId];
+    const stepsSchema = STEP_SCHEMAS[productId];
+
+    const [collectedData, updateData] = useState<State>({});
+    const {currentStep, setNextStep} = useHistoryStepper();
     
-    const [collectedData, updateData] = useState<BuyflowState>(getInitialState(formSchema));
+    const isLastStep = () => currentStep === stepsSchema.length;
 
-    const handleChange = useCallback((id: string, value: string) => {
-        updateData((prev) =>({ ...prev, [id]: value}))
-    }, []);
-
-    const validate = (itemIds: string[]) => {
-        return !itemIds.some((id : string) => formSchema[id].required && collectedData[id].toString().length === 0);
-    }
+    const handleNextStep = (next: State) => {
+        updateData((prev) =>({ ...prev, ...next}));
+        setNextStep();
+    };
 
     return (
         <>
             <h4>{title}</h4>
-            <Stepper>
-                {stepSchema.map((itemIds, index) => (
-                    <Stepper.Step key={`step.${index}`} validation={()=> validate(itemIds)}>
-                        {itemIds.map(id => {
-                            const {type, label, required} = formSchema[id]; 
-                            return <Field 
-                                        key={id}
-                                        id={id} 
-                                        type={type}
-                                        label={label} 
-                                        required={required}
-                                        value={collectedData[id]} 
-                                        onChange={handleChange}/>
-                        })}
-                    </Stepper.Step>    
-                ))}
-                <Stepper.Step>
-                    {Object.entries(formSchema).map(([itemId, schema], index) => (
-                        <div key={`${index}.${itemId}`}>{schema.label} : {collectedData[itemId]}</div>
-                    ))}
-                </Stepper.Step>
-            </Stepper>
+            {!isLastStep() ? 
+                stepsSchema.map((fieldIds, index) => 
+                    <Step 
+                        key={index}
+                        productId={productId} 
+                        isActive={currentStep === index}
+                        fieldIds={fieldIds} 
+                        onNextClick={handleNextStep}
+                        />) :
+                    <LastStep 
+                            productId={productId} 
+                            fieldIds={stepsSchema.flat()} 
+                            values={collectedData}/>
+                    }
         </>
     )
 }
